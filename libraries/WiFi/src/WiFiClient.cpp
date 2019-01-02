@@ -240,6 +240,7 @@ int WiFiClient::setSocketOption(int option, char* value, size_t len)
 
 int WiFiClient::setTimeout(uint32_t seconds)
 {
+    Client::setTimeout(seconds * 1000);
     struct timeval tv;
     tv.tv_sec = seconds;
     tv.tv_usec = 0;
@@ -397,7 +398,8 @@ int WiFiClient::peek()
 
 int WiFiClient::available()
 {
-    if(!_connected) {
+    if(!_rxBuffer)
+    {
         return 0;
     }
     int res = _rxBuffer->available();
@@ -438,6 +440,8 @@ uint8_t WiFiClient::connected()
     if (_connected) {
         uint8_t dummy;
         int res = recv(fd(), &dummy, 0, MSG_DONTWAIT);
+        // avoid unused var warning by gcc
+        (void)res;
         switch (errno) {
             case EWOULDBLOCK:
             case ENOENT: //caused by vfs

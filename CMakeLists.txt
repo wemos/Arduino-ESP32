@@ -16,12 +16,15 @@ set(CORE_SRCS
   cores/esp32/esp32-hal-timer.c
   cores/esp32/esp32-hal-touch.c
   cores/esp32/esp32-hal-uart.c
+  cores/esp32/esp32-hal-rmt.c
   cores/esp32/Esp.cpp
+  cores/esp32/FunctionalInterrupt.cpp
   cores/esp32/HardwareSerial.cpp
   cores/esp32/IPAddress.cpp
   cores/esp32/IPv6Address.cpp
   cores/esp32/libb64/cdecode.c
   cores/esp32/libb64/cencode.c
+  cores/esp32/main.cpp
   cores/esp32/MD5Builder.cpp
   cores/esp32/Print.cpp
   cores/esp32/stdlib_noniso.c
@@ -40,9 +43,11 @@ set(LIBRARY_SRCS
   libraries/DNSServer/src/DNSServer.cpp
   libraries/EEPROM/EEPROM.cpp
   libraries/ESPmDNS/src/ESPmDNS.cpp
+  libraries/FFat/src/FFat.cpp
   libraries/FS/src/FS.cpp
   libraries/FS/src/vfs_api.cpp
   libraries/HTTPClient/src/HTTPClient.cpp
+  libraries/HTTPUpdate/src/HTTPUpdate.cpp
   libraries/NetBIOS/src/NetBIOS.cpp
   libraries/Preferences/src/Preferences.cpp
   libraries/SD_MMC/src/SD_MMC.cpp
@@ -145,6 +150,8 @@ set(BLE_SRCS
   libraries/BLE/src/BLEDescriptor.cpp
   libraries/BLE/src/BLEDescriptorMap.cpp
   libraries/BLE/src/BLEDevice.cpp
+  libraries/BLE/src/BLEEddystoneTLM.cpp
+  libraries/BLE/src/BLEEddystoneURL.cpp
   libraries/BLE/src/BLEExceptions.cpp
   libraries/BLE/src/BLEHIDDevice.cpp
   libraries/BLE/src/BLERemoteCharacteristic.cpp
@@ -175,8 +182,10 @@ set(COMPONENT_ADD_INCLUDEDIRS
   libraries/DNSServer/src
   libraries/ESP32/src
   libraries/ESPmDNS/src
+  libraries/FFat/src
   libraries/FS/src
   libraries/HTTPClient/src
+  libraries/HTTPUpdate/src
   libraries/NetBIOS/src
   libraries/Preferences/src
   libraries/SD_MMC/src
@@ -195,6 +204,6 @@ set(COMPONENT_ADD_INCLUDEDIRS
 set(COMPONENT_PRIV_INCLUDEDIRS cores/esp32/libb64)
 
 set(COMPONENT_REQUIRES spi_flash mbedtls mdns ethernet)
-set(COMPONENT_PRIV_REQUIRES fatfs nvs_flash app_update spiffs bootloader_support openssl)
+set(COMPONENT_PRIV_REQUIRES fatfs nvs_flash app_update spiffs bootloader_support openssl bt)
 
 register_component()

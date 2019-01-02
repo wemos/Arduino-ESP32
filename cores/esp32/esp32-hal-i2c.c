@@ -248,9 +248,10 @@ static void IRAM_ATTR i2cDumpCmdQueue(i2c_t *i2c)
 
 /* Stickbreaker ISR mode debug support
  */
+#if (ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO)
 static void i2cDumpDqData(i2c_t * i2c)
 {
-#if (ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO)&&(defined ENABLE_I2C_DEBUG_BUFFER)
+#if defined (ENABLE_I2C_DEBUG_BUFFER)
     uint16_t a=0;
     char buff[140];
     I2C_DATA_QUEUE_t *tdq;
@@ -306,9 +307,12 @@ static void i2cDumpDqData(i2c_t * i2c)
         }
         a++;
     }
+#else
+    log_i("Debug Buffer not Enabled");
 #endif
 }
-
+#endif
+#if ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO
 static void i2cDumpI2c(i2c_t * i2c)
 {
     log_e("i2c=%p",i2c);
@@ -332,11 +336,12 @@ static void i2cDumpI2c(i2c_t * i2c)
         i2cDumpDqData(i2c);
     }
 }
+#endif
 
+#if (ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO)  
 static void i2cDumpInts(uint8_t num)
 {
-#if (ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO) && (defined ENABLE_I2C_DEBUG_BUFFER)  
-
+#if defined (ENABLE_I2C_DEBUG_BUFFER)
     uint32_t b;
     log_i("%u row\tcount\tINTR\tTX\tRX\tTick ",num);
     for(uint32_t a=1; a<=INTBUFFMAX; a++) {
@@ -349,9 +354,10 @@ static void i2cDumpInts(uint8_t num)
     log_i("Debug Buffer not Enabled");
 #endif
 }
+#endif
 
-static void IRAM_ATTR i2cDumpStatus(i2c_t * i2c){
 #if (ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO)&&(defined ENABLE_I2C_DEBUG_BUFFER)
+static void IRAM_ATTR i2cDumpStatus(i2c_t * i2c){
     typedef union {
         struct {
             uint32_t ack_rec:             1;        /*This register stores the value of ACK bit.*/
@@ -377,11 +383,11 @@ static void IRAM_ATTR i2cDumpStatus(i2c_t * i2c){
     sr.val= i2c->dev->status_reg.val;
     
     log_i("ack(%d) sl_rw(%d) to(%d) arb(%d) busy(%d) sl(%d) trans(%d) rx(%d) tx(%d) sclMain(%d) scl(%d)",sr.ack_rec,sr.slave_rw,sr.time_out,sr.arb_lost,sr.bus_busy,sr.slave_addressed,sr.byte_trans, sr.rx_fifo_cnt, sr.tx_fifo_cnt,sr.scl_main_state_last, sr.scl_state_last);
-#endif
 }
+#endif
 
-static void i2cDumpFifo(i2c_t * i2c){
 #if (ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO)&&(defined ENABLE_I2C_DEBUG_BUFFER)
+static void i2cDumpFifo(i2c_t * i2c){
 char buf[64];
 uint16_t k = 0;
 uint16_t i = fifoPos+1;
@@ -422,8 +428,8 @@ if(i != fifoPos){// actual data
       }
     }while( i!= fifoPos);
 }
-#endif
 }
+#endif
 
 static void IRAM_ATTR i2cTriggerDumps(i2c_t * i2c, uint8_t trigger, const char locus[]){
 #if (ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO)&&(defined ENABLE_I2C_DEBUG_BUFFER)
@@ -1142,7 +1148,7 @@ i2c_err_t i2cProcQueue(i2c_t * i2c, uint32_t *readCount, uint16_t timeOutMillis)
         if(tdq->ctrl.addrReq ==2) { // 10bit address
             taddr =((tdq->ctrl.addr >> 7) & 0xFE)
                    |tdq->ctrl.mode;
-            taddr = (taddr <<8) || (tdq->ctrl.addr&0xFF);
+            taddr = (taddr <<8) | (tdq->ctrl.addr&0xFF);
         } else { // 7bit address
             taddr =  ((tdq->ctrl.addr<<1)&0xFE)
                      |tdq->ctrl.mode;
@@ -1200,10 +1206,10 @@ i2c_err_t i2cProcQueue(i2c_t * i2c, uint32_t *readCount, uint16_t timeOutMillis)
     if(!i2c->intr_handle) { // create ISR for either peripheral
         // log_i("create ISR %d",i2c->num);
         uint32_t ret = 0;
-        uint32_t flags = ESP_INTR_FLAG_EDGE |  //< Edge-triggered interrupt
-          ESP_INTR_FLAG_IRAM |  //< ISR can be called if cache is disabled
-          ESP_INTR_FLAG_LOWMED;   //< Low and medium prio interrupts. These can be handled in C.
-
+        uint32_t flags = ESP_INTR_FLAG_IRAM |  //< ISR can be called if cache is disabled
+          ESP_INTR_FLAG_LOWMED |   //< Low and medium prio interrupts. These can be handled in C.
+          ESP_INTR_FLAG_SHARED; //< Reduce resource requirements, Share interrupts
+      
         if(i2c->num) {
             ret = esp_intr_alloc_intrstatus(ETS_I2C_EXT1_INTR_SOURCE, flags, (uint32_t)&i2c->dev->int_status.val, interruptsEnabled, &i2c_isr_handler_default,i2c, &i2c->intr_handle);
         } else {
@@ -1598,18 +1604,34 @@ i2c_err_t i2cRead(i2c_t * i2c, uint16_t address, uint8_t* buff, uint16_t size, b
     return last_error;
 }
 
+#define MIN_I2C_CLKS 100
 i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
 {
     if(i2c == NULL) {
         return I2C_ERROR_DEV;
     }
-    I2C_FIFO_CONF_t f;
-  
-    uint32_t period = (APB_CLK_FREQ/clk_speed) / 2;
+    uint32_t apb = getApbFrequency(); 
+    uint32_t period = (apb/clk_speed) / 2;
+
+    if((apb/8192 > clk_speed)||(apb/MIN_I2C_CLKS < clk_speed)){ //out of bounds
+        log_w("i2c freq(%d) out of bounds.vs APB Clock(%d), min=%d, max=%d",clk_speed,apb,(apb/8192),(apb/MIN_I2C_CLKS));
+    }
+    if(period < (MIN_I2C_CLKS/2) ){
+        period = (MIN_I2C_CLKS/2);
+        clk_speed = apb/(period*2);
+        log_w("APB Freq too slow, Reducing i2c Freq to %d Hz",clk_speed);
+    } else if ( period> 4095) {
+        period = 4095;
+        clk_speed = apb/(period*2);
+        log_w("APB Freq too fast, Increasing i2c Freq to %d Hz",clk_speed);
+    }
+      
     uint32_t halfPeriod = period/2;
     uint32_t quarterPeriod = period/4;
 
     I2C_MUTEX_LOCK();
+
+    I2C_FIFO_CONF_t f;
 
     // Adjust Fifo thresholds based on frequency
     f.val    = i2c->dev->fifo_conf.val;
@@ -1651,7 +1673,7 @@ uint32_t i2cGetFrequency(i2c_t * i2c)
     uint32_t result = 0;
     uint32_t old_count = (i2c->dev->scl_low_period.period+i2c->dev->scl_high_period.period);
     if(old_count>0) {
-        result = APB_CLK_FREQ / old_count;
+        result = getApbFrequency() / old_count;
     } else {
         result = 0;
     }

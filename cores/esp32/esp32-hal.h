@@ -57,6 +57,7 @@ void yield(void);
 #include "esp32-hal-spi.h"
 #include "esp32-hal-i2c.h"
 #include "esp32-hal-ledc.h"
+#include "esp32-hal-rmt.h"
 #include "esp32-hal-sigmadelta.h"
 #include "esp32-hal-timer.h"
 #include "esp32-hal-bt.h"
@@ -70,6 +71,30 @@ void yield(void);
 
 //returns chip temperature in Celsius
 float temperatureRead();
+
+#if CONFIG_AUTOSTART_ARDUINO
+//enable/disable WDT for Arduino's setup and loop functions
+void enableLoopWDT();
+void disableLoopWDT();
+#endif
+
+//enable/disable WDT for the IDLE task on Core 0 (SYSTEM)
+void enableCore0WDT();
+void disableCore0WDT();
+#ifndef CONFIG_FREERTOS_UNICORE
+//enable/disable WDT for the IDLE task on Core 1 (Arduino)
+void enableCore1WDT();
+void disableCore1WDT();
+#endif
+
+//function takes the following frequencies as valid values:
+//  240, 160, 80                     <<< For all XTAL types
+//  40, 20, 13, 10, 8, 5, 4, 3, 2, 1 <<< For 40MHz XTAL
+//  26, 13, 5, 4, 3, 2, 1            <<< For 26MHz XTAL
+//  24, 12, 8, 6, 4, 3, 2, 1         <<< For 24MHz XTAL
+bool setCpuFrequency(uint32_t cpu_freq_mhz);
+uint32_t getCpuFrequency();
+uint32_t getApbFrequency();
 
 unsigned long micros();
 unsigned long millis();
