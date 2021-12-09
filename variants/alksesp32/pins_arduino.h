@@ -13,6 +13,10 @@
 
 #define ALKSESP32 // tell library to not map pins again
 
+static const uint8_t LED_BUILTIN = 23;
+#define BUILTIN_LED  LED_BUILTIN // backward compatibility
+#define LED_BUILTIN LED_BUILTIN
+
 static const uint8_t TX = 1;
 static const uint8_t RX = 3;
 

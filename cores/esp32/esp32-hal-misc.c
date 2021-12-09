@@ -21,29 +21,64 @@
 #include "esp_partition.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#ifdef CONFIG_APP_ROLLBACK_ENABLE
+#include "esp_ota_ops.h"
+#endif //CONFIG_APP_ROLLBACK_ENABLE
 #ifdef CONFIG_BT_ENABLED
 #include "esp_bt.h"
 #endif //CONFIG_BT_ENABLED
 #include <sys/time.h>
 #include "soc/rtc.h"
 #include "soc/rtc_cntl_reg.h"
-#include "rom/rtc.h"
+#include "soc/apb_ctrl_reg.h"
 #include "esp_task_wdt.h"
 #include "esp32-hal.h"
 
+#include "esp_system.h"
+#ifdef ESP_IDF_VERSION_MAJOR // IDF 4+
+#if CONFIG_IDF_TARGET_ESP32 // ESP32/PICO-D4
+#include "esp32/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32S2
+#include "esp32s2/rom/rtc.h"
+#include "driver/temp_sensor.h"
+#elif CONFIG_IDF_TARGET_ESP32C3
+#include "esp32c3/rom/rtc.h"
+#include "driver/temp_sensor.h"
+#else 
+#error Target CONFIG_IDF_TARGET is not supported
+#endif
+#else // ESP32 Before IDF 4.0
+#include "rom/rtc.h"
+#endif
+
 //Undocumented!!! Get chip temperature in Farenheit
 //Source: https://github.com/pcbreflux/espressif/blob/master/esp32/arduino/sketchbook/ESP32_int_temp_sensor/ESP32_int_temp_sensor.ino
+#ifdef CONFIG_IDF_TARGET_ESP32
 uint8_t temprature_sens_read();
 
 float temperatureRead()
 {
     return (temprature_sens_read() - 32) / 1.8;
 }
+#else
+float temperatureRead()
+{
+    float result = NAN;
+    temp_sensor_config_t tsens = TSENS_CONFIG_DEFAULT();
+    temp_sensor_set_config(tsens);
+    temp_sensor_start();
+    temp_sensor_read_celsius(&result); 
+    temp_sensor_stop();
+    return result;
+}
+#endif
 
-void yield()
+void __yield()
 {
     vPortYield();
 }
+
+void yield() __attribute__ ((weak, alias("__yield")));
 
 #if CONFIG_AUTOSTART_ARDUINO
 
@@ -66,6 +101,13 @@ void disableLoopWDT(){
         if(esp_task_wdt_delete(loopTaskHandle) != ESP_OK){
             log_e("Failed to remove loop task from WDT");
         }
+    }
+}
+
+void feedLoopWDT(){
+    esp_err_t err = esp_task_wdt_reset();
+    if(err != ESP_OK){
+        log_e("Failed to feed WDT! Error: %d", err);
     }
 }
 #endif
@@ -100,70 +142,50 @@ void disableCore1WDT(){
 }
 #endif
 
-static uint32_t _cpu_freq_mhz = CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ;
-static uint32_t _sys_time_multiplier = 1;
-
-bool setCpuFrequency(uint32_t cpu_freq_mhz){
-    rtc_cpu_freq_config_t conf, cconf;
-    rtc_clk_cpu_freq_get_config(&cconf);
-    if(cconf.freq_mhz == cpu_freq_mhz && _cpu_freq_mhz == cpu_freq_mhz){
-        return true;
-    }
-    if(!rtc_clk_cpu_freq_mhz_to_config(cpu_freq_mhz, &conf)){
-        log_e("CPU clock could not be set to %u MHz", cpu_freq_mhz);
-        return false;
-    }
-#if ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_INFO
-    log_i("%s: %u / %u = %u Mhz", (conf.source == RTC_CPU_FREQ_SRC_PLL)?"PLL":((conf.source == RTC_CPU_FREQ_SRC_APLL)?"APLL":((conf.source == RTC_CPU_FREQ_SRC_XTAL)?"XTAL":"8M")), conf.source_freq_mhz, conf.div, conf.freq_mhz);
-    delay(10);
+BaseType_t xTaskCreateUniversal( TaskFunction_t pxTaskCode,
+                        const char * const pcName,
+                        const uint32_t usStackDepth,
+                        void * const pvParameters,
+                        UBaseType_t uxPriority,
+                        TaskHandle_t * const pxCreatedTask,
+                        const BaseType_t xCoreID ){
+#ifndef CONFIG_FREERTOS_UNICORE
+    if(xCoreID >= 0 && xCoreID < 2) {
+        return xTaskCreatePinnedToCore(pxTaskCode, pcName, usStackDepth, pvParameters, uxPriority, pxCreatedTask, xCoreID);
+    } else {
 #endif
-    rtc_clk_cpu_freq_set_config_fast(&conf);
-    _cpu_freq_mhz = conf.freq_mhz;
-    _sys_time_multiplier = 80000000 / getApbFrequency();
-    return true;
-}
-
-uint32_t getCpuFrequency(){
-    rtc_cpu_freq_config_t conf;
-    rtc_clk_cpu_freq_get_config(&conf);
-    return conf.freq_mhz;
-}
-
-uint32_t getApbFrequency(){
-    rtc_cpu_freq_config_t conf;
-    rtc_clk_cpu_freq_get_config(&conf);
-    if(conf.freq_mhz >= 80){
-        return 80000000;
+    return xTaskCreate(pxTaskCode, pcName, usStackDepth, pvParameters, uxPriority, pxCreatedTask);
+#ifndef CONFIG_FREERTOS_UNICORE
     }
-    return (conf.source_freq_mhz * 1000000) / conf.div;
+#endif
 }
 
-unsigned long IRAM_ATTR micros()
+unsigned long ARDUINO_ISR_ATTR micros()
 {
-    return (unsigned long) (esp_timer_get_time()) * _sys_time_multiplier;
+    return (unsigned long) (esp_timer_get_time());
 }
 
-unsigned long IRAM_ATTR millis()
+unsigned long ARDUINO_ISR_ATTR millis()
 {
-    return (unsigned long) (micros() / 1000);
+    return (unsigned long) (esp_timer_get_time() / 1000ULL);
 }
 
 void delay(uint32_t ms)
 {
-    vTaskDelay((ms * _cpu_freq_mhz) / (portTICK_PERIOD_MS * 240));
+    vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
-void IRAM_ATTR delayMicroseconds(uint32_t us)
+void ARDUINO_ISR_ATTR delayMicroseconds(uint32_t us)
 {
-    uint32_t m = micros();
+    uint64_t m = (uint64_t)esp_timer_get_time();
     if(us){
-        uint32_t e = (m + us);
+        uint64_t e = (m + us);
         if(m > e){ //overflow
-            while(micros() > e){
+            while((uint64_t)esp_timer_get_time() > e){
                 NOP();
             }
         }
-        while(micros() < e){
+        while((uint64_t)esp_timer_get_time() < e){
             NOP();
         }
     }
@@ -175,6 +197,9 @@ void initVariant() {}
 void init() __attribute__((weak));
 void init() {}
 
+bool verifyOta() __attribute__((weak));
+bool verifyOta() { return true; }
+
 #ifdef CONFIG_BT_ENABLED
 //overwritten in esp32-hal-bt.c
 bool btInUse() __attribute__((weak));
@@ -183,10 +208,26 @@ bool btInUse(){ return false; }
 
 void initArduino()
 {
-#ifdef F_CPU
-    setCpuFrequency(F_CPU/1000000L);
+#ifdef CONFIG_APP_ROLLBACK_ENABLE
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_ota_img_states_t ota_state;
+    if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
+        if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+            if (verifyOta()) {
+                esp_ota_mark_app_valid_cancel_rollback();
+            } else {
+                log_e("OTA verification failed! Start rollback to the previous version ...");
+                esp_ota_mark_app_invalid_rollback_and_reboot();
+            }
+        }
+    }
 #endif
-#if CONFIG_SPIRAM_SUPPORT
+    //init proper ref tick value for PLL (uncomment if REF_TICK is different than 1MHz)
+    //ESP_REG(APB_CTRL_PLL_TICK_CONF_REG) = APB_CLK_FREQ / REF_CLK_FREQ - 1;
+#ifdef F_CPU
+    setCpuFrequencyMhz(F_CPU/1000000);
+#endif
+#if CONFIG_SPIRAM_SUPPORT || CONFIG_SPIRAM
     psramInit();
 #endif
     esp_log_level_set("*", CONFIG_LOG_DEFAULT_LEVEL);
@@ -215,7 +256,7 @@ void initArduino()
 }
 
 //used by hal log
-const char * IRAM_ATTR pathToFileName(const char * path)
+const char * ARDUINO_ISR_ATTR pathToFileName(const char * path)
 {
     size_t i = 0;
     size_t pos = 0;

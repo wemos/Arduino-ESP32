@@ -22,6 +22,7 @@
 
  */
 
+
 #include "WiFi.h"
 #include "WiFiGeneric.h"
 #include "WiFiScan.h"
@@ -35,14 +36,42 @@ extern "C" {
 #include <string.h>
 #include <esp_err.h>
 #include <esp_wifi.h>
-#include <esp_event_loop.h>
+#include <esp_event.h>
 #include <esp32-hal.h>
 #include <lwip/ip_addr.h>
 #include "lwip/err.h"
 }
 
-bool WiFiScanClass::_scanAsync = false;
+static const char * cipher_str(int cipher)
+{
+    switch (cipher) {
+    case WIFI_CIPHER_TYPE_NONE:
+        return ("NONE");
+        break;
+    case WIFI_CIPHER_TYPE_WEP40:
+    	return ("WEP40");
+        break;
+    case WIFI_CIPHER_TYPE_WEP104:
+    	return ("WEP104");
+        break;
+    case WIFI_CIPHER_TYPE_TKIP:
+    	return ("TKIP");
+        break;
+    case WIFI_CIPHER_TYPE_CCMP:
+    	return ("CCMP");
+        break;
+    case WIFI_CIPHER_TYPE_TKIP_CCMP:
+    	return ("TKIP_CCMP");
+        break;
+    default:
+        break;
+    }
+	return ("UNKNOWN");
+}
 
+bool WiFiScanClass::_scanAsync = false;
+uint32_t WiFiScanClass::_scanStarted = 0;
+uint32_t WiFiScanClass::_scanTimeout = 10000;
 uint16_t WiFiScanClass::_scanCount = 0;
 void* WiFiScanClass::_scanResult = 0;
 
@@ -52,12 +81,13 @@ void* WiFiScanClass::_scanResult = 0;
  * @param show_hidden   show hidden networks
  * @return Number of discovered networks
  */
-int16_t WiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, uint32_t max_ms_per_chan)
+int16_t WiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, uint32_t max_ms_per_chan, uint8_t channel)
 {
     if(WiFiGenericClass::getStatusBits() & WIFI_SCANNING_BIT) {
         return WIFI_SCAN_RUNNING;
     }
 
+    WiFiScanClass::_scanTimeout = max_ms_per_chan * 20;
     WiFiScanClass::_scanAsync = async;
 
     WiFi.enableSTA(true);
@@ -67,7 +97,7 @@ int16_t WiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, 
     wifi_scan_config_t config;
     config.ssid = 0;
     config.bssid = 0;
-    config.channel = 0;
+    config.channel = channel;
     config.show_hidden = show_hidden;
     if(passive){
         config.scan_type = WIFI_SCAN_TYPE_PASSIVE;
@@ -78,6 +108,11 @@ int16_t WiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, 
         config.scan_time.active.max = max_ms_per_chan;
     }
     if(esp_wifi_scan_start(&config, false) == ESP_OK) {
+        _scanStarted = millis();
+        if (!_scanStarted) { //Prevent 0 from millis overflow
+	    ++_scanStarted;
+	}
+
         WiFiGenericClass::clearStatusBits(WIFI_SCAN_DONE_BIT);
         WiFiGenericClass::setStatusBits(WIFI_SCANNING_BIT);
 
@@ -107,6 +142,7 @@ void WiFiScanClass::_scanDone()
             WiFiScanClass::_scanCount = 0;
         }
     }
+    WiFiScanClass::_scanStarted=0; //Reset after a scan is completed for normal behavior
     WiFiGenericClass::setStatusBits(WIFI_SCAN_DONE_BIT);
     WiFiGenericClass::clearStatusBits(WIFI_SCANNING_BIT);
 }
@@ -132,6 +168,11 @@ void * WiFiScanClass::_getScanInfoByIndex(int i)
  */
 int16_t WiFiScanClass::scanComplete()
 {
+    if (WiFiScanClass::_scanStarted && (millis()-WiFiScanClass::_scanStarted) > WiFiScanClass::_scanTimeout) { //Check is scan was started and if the delay expired, return WIFI_SCAN_FAILED in this case 
+    	WiFiGenericClass::clearStatusBits(WIFI_SCANNING_BIT);
+	return WIFI_SCAN_FAILED;
+    }
+
     if(WiFiGenericClass::getStatusBits() & WIFI_SCAN_DONE_BIT) {
         return WiFiScanClass::_scanCount;
     }

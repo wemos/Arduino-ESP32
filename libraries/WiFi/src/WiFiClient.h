@@ -28,7 +28,15 @@
 class WiFiClientSocketHandle;
 class WiFiClientRxBuffer;
 
-class WiFiClient : public Client
+class ESPLwIPClient : public Client
+{
+public:
+        virtual int connect(IPAddress ip, uint16_t port, int32_t timeout) = 0;
+        virtual int connect(const char *host, uint16_t port, int32_t timeout) = 0;
+        virtual int setTimeout(uint32_t seconds) = 0;
+};
+
+class WiFiClient : public ESPLwIPClient
 {
 protected:
     std::shared_ptr<WiFiClientSocketHandle> clientSocketHandle;
@@ -41,7 +49,9 @@ public:
     WiFiClient(int fd);
     ~WiFiClient();
     int connect(IPAddress ip, uint16_t port);
+    int connect(IPAddress ip, uint16_t port, int32_t timeout);
     int connect(const char *host, uint16_t port);
+    int connect(const char *host, uint16_t port, int32_t timeout);
     size_t write(uint8_t data);
     size_t write(const uint8_t *buf, size_t size);
     size_t write_P(PGM_P buf, size_t size);

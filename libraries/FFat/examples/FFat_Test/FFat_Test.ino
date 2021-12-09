@@ -1,6 +1,10 @@
 #include "FS.h"
 #include "FFat.h"
 
+// This file should be compiled with 'Partition Scheme' (in Tools menu)
+// set to 'Default with ffat' if you have a 4MB ESP32 dev module or
+// set to '16M Fat' if you have a 16MB ESP32 dev module.
+
 // You only need to format FFat the first time you run a test
 #define FORMAT_FFAT true
 
@@ -23,7 +27,7 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
             Serial.print("  DIR : ");
             Serial.println(file.name());
             if(levels){
-                listDir(fs, file.name(), levels -1);
+                listDir(fs, file.path(), levels -1);
             }
         } else {
             Serial.print("  FILE: ");
@@ -48,6 +52,7 @@ void readFile(fs::FS &fs, const char * path){
     while(file.available()){
         Serial.write(file.read());
     }
+    file.close();
 }
 
 void writeFile(fs::FS &fs, const char * path, const char * message){
@@ -61,8 +66,9 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
     if(file.print(message)){
         Serial.println("- file written");
     } else {
-        Serial.println("- frite failed");
+        Serial.println("- write failed");
     }
+    file.close();
 }
 
 void appendFile(fs::FS &fs, const char * path, const char * message){
@@ -78,6 +84,7 @@ void appendFile(fs::FS &fs, const char * path, const char * message){
     } else {
         Serial.println("- append failed");
     }
+    file.close();
 }
 
 void renameFile(fs::FS &fs, const char * path1, const char * path2){
@@ -160,9 +167,9 @@ void setup(){
         Serial.println("FFat Mount Failed");
         return;
     }
-    
-    Serial.printf("Total space: %10lu\n", FFat.totalBytes());
-    Serial.printf("Free space: %10lu\n", FFat.freeBytes());
+
+    Serial.printf("Total space: %10u\n", FFat.totalBytes());
+    Serial.printf("Free space: %10u\n", FFat.freeBytes());
     listDir(FFat, "/", 0);
     writeFile(FFat, "/hello.txt", "Hello ");
     appendFile(FFat, "/hello.txt", "World!\r\n");
@@ -171,7 +178,7 @@ void setup(){
     readFile(FFat, "/foo.txt");
     deleteFile(FFat, "/foo.txt");
     testFileIO(FFat, "/test.txt");
-    Serial.printf("Free space: %10lu\n", FFat.freeBytes());
+    Serial.printf("Free space: %10u\n", FFat.freeBytes());
     deleteFile(FFat, "/test.txt");
     Serial.println( "Test complete" );
 }

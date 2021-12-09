@@ -20,10 +20,6 @@
 #ifndef HAL_ESP32_HAL_H_
 #define HAL_ESP32_HAL_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -34,9 +30,39 @@ extern "C" {
 #include <math.h>
 #include "sdkconfig.h"
 #include "esp_system.h"
+#include "esp_sleep.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "freertos/semphr.h"
+#include "freertos/event_groups.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef F_CPU
+#if CONFIG_IDF_TARGET_ESP32 // ESP32/PICO-D4
 #define F_CPU (CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000000U)
+#elif CONFIG_IDF_TARGET_ESP32S2
+#define F_CPU (CONFIG_ESP32S2_DEFAULT_CPU_FREQ_MHZ * 1000000U)
+#endif
+#endif
+
+#if CONFIG_ARDUINO_ISR_IRAM
+#define ARDUINO_ISR_ATTR IRAM_ATTR
+#define ARDUINO_ISR_FLAG ESP_INTR_FLAG_IRAM
+#else
+#define ARDUINO_ISR_ATTR
+#define ARDUINO_ISR_FLAG (0)
+#endif
+
+#ifndef ARDUINO_RUNNING_CORE
+#define ARDUINO_RUNNING_CORE CONFIG_ARDUINO_RUNNING_CORE
+#endif
+
+#ifndef ARDUINO_EVENT_RUNNING_CORE
+#define ARDUINO_EVENT_RUNNING_CORE CONFIG_ARDUINO_EVENT_RUNNING_CORE
 #endif
 
 //forward declaration from freertos/portmacro.h
@@ -62,12 +88,9 @@ void yield(void);
 #include "esp32-hal-timer.h"
 #include "esp32-hal-bt.h"
 #include "esp32-hal-psram.h"
+#include "esp32-hal-cpu.h"
 
-#ifndef BOARD_HAS_PSRAM
-#ifdef CONFIG_SPIRAM_SUPPORT
-#undef CONFIG_SPIRAM_SUPPORT
-#endif
-#endif
+void analogWrite(uint8_t pin, int value);
 
 //returns chip temperature in Celsius
 float temperatureRead();
@@ -76,6 +99,8 @@ float temperatureRead();
 //enable/disable WDT for Arduino's setup and loop functions
 void enableLoopWDT();
 void disableLoopWDT();
+//feed WDT for the loop task
+void feedLoopWDT();
 #endif
 
 //enable/disable WDT for the IDLE task on Core 0 (SYSTEM)
@@ -87,14 +112,15 @@ void enableCore1WDT();
 void disableCore1WDT();
 #endif
 
-//function takes the following frequencies as valid values:
-//  240, 160, 80                     <<< For all XTAL types
-//  40, 20, 13, 10, 8, 5, 4, 3, 2, 1 <<< For 40MHz XTAL
-//  26, 13, 5, 4, 3, 2, 1            <<< For 26MHz XTAL
-//  24, 12, 8, 6, 4, 3, 2, 1         <<< For 24MHz XTAL
-bool setCpuFrequency(uint32_t cpu_freq_mhz);
-uint32_t getCpuFrequency();
-uint32_t getApbFrequency();
+//if xCoreID < 0 or CPU is unicore, it will use xTaskCreate, else xTaskCreatePinnedToCore
+//allows to easily handle all possible situations without repetitive code
+BaseType_t xTaskCreateUniversal( TaskFunction_t pxTaskCode,
+                        const char * const pcName,
+                        const uint32_t usStackDepth,
+                        void * const pvParameters,
+                        UBaseType_t uxPriority,
+                        TaskHandle_t * const pxCreatedTask,
+                        const BaseType_t xCoreID );
 
 unsigned long micros();
 unsigned long millis();

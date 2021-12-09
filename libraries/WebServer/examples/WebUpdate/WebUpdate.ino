@@ -50,6 +50,8 @@ void setup(void) {
           Update.printError(Serial);
         }
         Serial.setDebugOutput(false);
+      } else {
+        Serial.printf("Update Failed Unexpectedly (likely broken connection): status=%d\n", upload.status);
       }
     });
     server.begin();
@@ -63,5 +65,5 @@ void setup(void) {
 
 void loop(void) {
   server.handleClient();
-  delay(1);
+  delay(2);//allow the cpu to switch to other tasks
 }

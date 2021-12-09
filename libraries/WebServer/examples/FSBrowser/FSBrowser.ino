@@ -28,7 +28,8 @@
 #include <ESPmDNS.h>
 
 #define FILESYSTEM SPIFFS
-#define FORMAT_FILESYSTEM true
+// You only need to format the filesystem once
+#define FORMAT_FILESYSTEM false
 #define DBG_OUTPUT_PORT Serial
 
 #if FILESYSTEM == FFat
@@ -206,7 +207,7 @@ void handleFileList() {
           output += "{\"type\":\"";
           output += (file.isDirectory()) ? "dir" : "file";
           output += "\",\"name\":\"";
-          output += String(file.name()).substring(1);
+          output += String(file.path()).substring(1);
           output += "\"}";
           file = root.openNextFile();
       }
@@ -299,4 +300,5 @@ void setup(void) {
 
 void loop(void) {
   server.handleClient();
+  delay(2);//allow the cpu to switch to other tasks
 }

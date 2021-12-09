@@ -141,7 +141,6 @@ static bool xjtReceiveBit(size_t index, bool bit){
 }
 
 void parseRmt(rmt_data_t* items, size_t len, uint32_t* channels){
-    size_t chan = 0;
     bool valid = true;
     rmt_data_t* it = NULL;
 
@@ -173,7 +172,7 @@ void parseRmt(rmt_data_t* items, size_t len, uint32_t* channels){
     }
 }
 
-extern "C" void receive_data(uint32_t *data, size_t len)
+extern "C" void receive_data(uint32_t *data, size_t len, void * arg)
 {
     parseRmt((rmt_data_t*) data, len, channels);
 }
@@ -193,7 +192,7 @@ void setup()
     Serial.printf("real tick set to: %fns\n", realTick);
 
     // Ask to start reading
-    rmtRead(rmt_recv, receive_data);
+    rmtRead(rmt_recv, receive_data, NULL);
 }
 
 void loop() 

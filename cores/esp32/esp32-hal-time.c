@@ -14,6 +14,8 @@
 
 #include "esp32-hal.h"
 #include "lwip/apps/sntp.h"
+//#include "tcpip_adapter.h"
+#include "esp_netif.h"
 
 static void setTimeZone(long offset, int daylight)
 {
@@ -42,9 +44,13 @@ static void setTimeZone(long offset, int daylight)
 /*
  * configTime
  * Source: https://github.com/esp8266/Arduino/blob/master/cores/esp8266/time.c
+ * Note: Bundled Arduino lwip supports only ONE ntp server, 2nd and 3rd options are silently ignored
+ *       see CONFIG_LWIP_DHCP_MAX_NTP_SERVERS define in ./tools/sdk/esp32/sdkconfig
  * */
 void configTime(long gmtOffset_sec, int daylightOffset_sec, const char* server1, const char* server2, const char* server3)
 {
+    //tcpip_adapter_init();  // Should not hurt anything if already inited
+    esp_netif_init();
     if(sntp_enabled()){
         sntp_stop();
     }
@@ -59,9 +65,13 @@ void configTime(long gmtOffset_sec, int daylightOffset_sec, const char* server1,
 /*
  * configTzTime
  * sntp setup using TZ environment variable
+ * Note: Bundled Arduino lwip supports only ONE ntp server, 2nd and 3rd options are silently ignored
+ *       see CONFIG_LWIP_DHCP_MAX_NTP_SERVERS define in ./tools/sdk/esp32/sdkconfig
  * */
 void configTzTime(const char* tz, const char* server1, const char* server2, const char* server3)
 {
+    //tcpip_adapter_init();  // Should not hurt anything if already inited
+    esp_netif_init();
     if(sntp_enabled()){
         sntp_stop();
     }
@@ -76,23 +86,15 @@ void configTzTime(const char* tz, const char* server1, const char* server2, cons
 
 bool getLocalTime(struct tm * info, uint32_t ms)
 {
-    uint32_t count = ms / 10;
+    uint32_t start = millis();
     time_t now;
-
-    time(&now);
-    localtime_r(&now, info);
-
-    if(info->tm_year > (2016 - 1900)){
-        return true;
-    }
-
-    while(count--) {
-        delay(10);
+    while((millis()-start) <= ms) {
         time(&now);
         localtime_r(&now, info);
         if(info->tm_year > (2016 - 1900)){
             return true;
         }
+        delay(10);
     }
     return false;
 }

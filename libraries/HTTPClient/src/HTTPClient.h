@@ -119,6 +119,24 @@ typedef enum {
     HTTPC_TE_CHUNKED
 } transferEncoding_t;
 
+/**
+ * redirection follow mode.
+ * + `HTTPC_DISABLE_FOLLOW_REDIRECTS` - no redirection will be followed.
+ * + `HTTPC_STRICT_FOLLOW_REDIRECTS` - strict RFC2616, only requests using
+ *      GET or HEAD methods will be redirected (using the same method),
+ *      since the RFC requires end-user confirmation in other cases.
+ * + `HTTPC_FORCE_FOLLOW_REDIRECTS` - all redirections will be followed,
+ *      regardless of a used method. New request will use the same method,
+ *      and they will include the same body data and the same headers.
+ *      In the sense of the RFC, it's just like every redirection is confirmed.
+ */
+typedef enum {
+    HTTPC_DISABLE_FOLLOW_REDIRECTS,
+    HTTPC_STRICT_FOLLOW_REDIRECTS,
+    HTTPC_FORCE_FOLLOW_REDIRECTS
+} followRedirects_t;
+
+
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
 class TransportTraits;
 typedef std::unique_ptr<TransportTraits> TransportTraitsPtr;
@@ -153,12 +171,21 @@ public:
     void setUserAgent(const String& userAgent);
     void setAuthorization(const char * user, const char * password);
     void setAuthorization(const char * auth);
+    void setAuthorizationType(const char * authType);
+    void setConnectTimeout(int32_t connectTimeout);
     void setTimeout(uint16_t timeout);
 
+    // Redirections
+    void setFollowRedirects(followRedirects_t follow);
+    void setRedirectLimit(uint16_t limit); // max redirects to follow for a single request
+
+    bool setURL(const String &url);
     void useHTTP10(bool usehttp10 = true);
 
     /// request handling
     int GET();
+    int PATCH(uint8_t * payload, size_t size);
+    int PATCH(String payload);
     int POST(uint8_t * payload, size_t size);
     int POST(String payload);
     int PUT(uint8_t * payload, size_t size);
@@ -179,6 +206,7 @@ public:
 
 
     int getSize(void);
+    const String &getLocation(void);
 
     WiFiClient& getStream(void);
     WiFiClient* getStreamPtr(void);
@@ -194,7 +222,7 @@ protected:
     };
 
     bool beginInternal(String url, const char* expectedProtocol);
-    void disconnect();
+    void disconnect(bool preserveClient = false);
     void clear();
     int returnError(int error);
     bool connect(void);
@@ -213,7 +241,8 @@ protected:
     /// request handling
     String _host;
     uint16_t _port = 0;
-    bool _reuse = false;
+    int32_t _connectTimeout = -1;
+    bool _reuse = true;
     uint16_t _tcpTimeout = HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
     bool _useHTTP10 = false;
     bool _secure = false;
@@ -223,6 +252,7 @@ protected:
     String _headers;
     String _userAgent = "ESP32HTTPClient";
     String _base64Authorization;
+    String _authorizationType = "Basic";
 
     /// Response handling
     RequestArgument* _currentHeaders = nullptr;
@@ -231,6 +261,9 @@ protected:
     int _returnCode = 0;
     int _size = -1;
     bool _canReuse = false;
+    followRedirects_t _followRedirects = HTTPC_DISABLE_FOLLOW_REDIRECTS;
+    uint16_t _redirectLimit = 10;
+    String _location;
     transferEncoding_t _transferEncoding = HTTPC_TE_IDENTITY;
 };
 

@@ -21,6 +21,8 @@
 #define ESP_H
 
 #include <Arduino.h>
+#include <esp_partition.h>
+#include <hal/cpu_hal.h>
 
 /**
  * AVR macros for WDT managment
@@ -75,8 +77,10 @@ public:
     uint32_t getMaxAllocPsram();
 
     uint8_t getChipRevision();
-    uint8_t getCpuFreqMHz(){ return CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ; }
-    uint32_t getCycleCount();
+    const char * getChipModel();
+    uint8_t getChipCores();
+    uint32_t getCpuFreqMHz(){ return getCpuFrequencyMhz(); }
+    inline uint32_t getCycleCount() __attribute__((always_inline));
     const char * getSdkVersion();
 
     void deepSleep(uint32_t time_us);
@@ -97,9 +101,18 @@ public:
     bool flashWrite(uint32_t offset, uint32_t *data, size_t size);
     bool flashRead(uint32_t offset, uint32_t *data, size_t size);
 
+    bool partitionEraseRange(const esp_partition_t *partition, uint32_t offset, size_t size);
+    bool partitionWrite(const esp_partition_t *partition, uint32_t offset, uint32_t *data, size_t size);
+    bool partitionRead(const esp_partition_t *partition, uint32_t offset, uint32_t *data, size_t size);
+
     uint64_t getEfuseMac();
 
 };
+
+uint32_t ARDUINO_ISR_ATTR EspClass::getCycleCount()
+{
+    return cpu_hal_get_cycle_count();
+}
 
 extern EspClass ESP;
 

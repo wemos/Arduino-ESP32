@@ -17,6 +17,10 @@ WiFiMulti WiFiMulti;
 
 // Set time via NTP, as required for x.509 validation
 void setClock() {
+  /*
+    Note: Bundled Arduino lwip supports only ONE ntp server, 2nd and 3rd options are silently ignored
+    see CONFIG_LWIP_DHCP_MAX_NTP_SERVERS define in ./tools/sdk/esp32/sdkconfig
+  */
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");  // UTC
 
   Serial.print(F("Waiting for NTP time sync: "));
@@ -96,7 +100,7 @@ void loop() {
     client.setCACert(rootCACertificate);
 
     // Reading data over SSL may be slow, use an adequate timeout
-    client.setTimeout(12000);
+    client.setTimeout(12000 / 1000); // timeout argument is defined in seconds for setTimeout
 
     // The line below is optional. It can be used to blink the LED on the board during flashing
     // The LED will be on during download of one buffer of data from the network. The LED will
@@ -108,7 +112,7 @@ void loop() {
 
     t_httpUpdate_return ret = httpUpdate.update(client, "https://server/file.bin");
     // Or:
-    //t_httpUpdate_return ret = httpUpdate.update(client, "server", 443, "file.bin");
+    //t_httpUpdate_return ret = httpUpdate.update(client, "server", 443, "/file.bin");
 
 
     switch (ret) {

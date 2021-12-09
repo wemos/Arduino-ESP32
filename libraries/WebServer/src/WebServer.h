@@ -28,6 +28,7 @@
 #include <memory>
 #include <WiFi.h>
 #include "HTTP_Method.h"
+#include "Uri.h"
 
 enum HTTPUploadStatus { UPLOAD_FILE_START, UPLOAD_FILE_WRITE, UPLOAD_FILE_END,
                         UPLOAD_FILE_ABORTED };
@@ -84,9 +85,9 @@ public:
   void requestAuthentication(HTTPAuthMethod mode = BASIC_AUTH, const char* realm = NULL, const String& authFailMsg = String("") );
 
   typedef std::function<void(void)> THandlerFunction;
-  void on(const String &uri, THandlerFunction handler);
-  void on(const String &uri, HTTPMethod method, THandlerFunction fn);
-  void on(const String &uri, HTTPMethod method, THandlerFunction fn, THandlerFunction ufn);
+  void on(const Uri &uri, THandlerFunction handler);
+  void on(const Uri &uri, HTTPMethod method, THandlerFunction fn);
+  void on(const Uri &uri, HTTPMethod method, THandlerFunction fn, THandlerFunction ufn);
   void addHandler(RequestHandler* handler);
   void serveStatic(const char* uri, fs::FS& fs, const char* path, const char* cache_header = NULL );
   void onNotFound(THandlerFunction fn);  //called when handler is not assigned
@@ -122,20 +123,25 @@ public:
   void send_P(int code, PGM_P content_type, PGM_P content);
   void send_P(int code, PGM_P content_type, PGM_P content, size_t contentLength);
 
+  void enableDelay(boolean value);
+  void enableCORS(boolean value = true);
+  void enableCrossOrigin(boolean value = true);
+
   void setContentLength(const size_t contentLength);
   void sendHeader(const String& name, const String& value, bool first = false);
   void sendContent(const String& content);
+  void sendContent(const char* content, size_t contentLength);
   void sendContent_P(PGM_P content);
   void sendContent_P(PGM_P content, size_t size);
 
   static String urlDecode(const String& text);
 
-  template<typename T> 
+  template<typename T>
   size_t streamFile(T &file, const String& contentType) {
     _streamFileCore(file.size(), file.name(), contentType);
     return _currentClient.write(file);
   }
-  
+
 protected:
   virtual size_t _currentClientWrite(const char* b, size_t l) { return _currentClient.write( b, l ); }
   virtual size_t _currentClientWrite_P(PGM_P b, size_t l) { return _currentClient.write_P( b, l ); }
@@ -151,7 +157,7 @@ protected:
   int _uploadReadByte(WiFiClient& client);
   void _prepareHeader(String& response, int code, const char* content_type, size_t contentLength);
   bool _collectHeader(const char* headerName, const char* headerValue);
- 
+
   void _streamFileCore(const size_t fileSize, const String & fileName, const String & contentType);
 
   String _getRandomHexString();
@@ -163,6 +169,7 @@ protected:
     String value;
   };
 
+  boolean     _corsEnabled;
   WiFiServer  _server;
 
   WiFiClient  _currentClient;
@@ -171,6 +178,7 @@ protected:
   uint8_t     _currentVersion;
   HTTPClientStatus _currentStatus;
   unsigned long _statusChange;
+  boolean     _nullDelay;
 
   RequestHandler*  _currentHandler;
   RequestHandler*  _firstHandler;

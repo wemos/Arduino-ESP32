@@ -34,7 +34,7 @@ void loop(){
   if(connected){
     //Send a packet
     udp.beginPacket(udpAddress,udpPort);
-    udp.printf("Seconds since boot: %u", millis()/1000);
+    udp.printf("Seconds since boot: %lu", millis()/1000);
     udp.endPacket();
   }
   //Wait for 1 second
@@ -58,7 +58,7 @@ void connectToWiFi(const char * ssid, const char * pwd){
 //wifi event handler
 void WiFiEvent(WiFiEvent_t event){
     switch(event) {
-      case SYSTEM_EVENT_STA_GOT_IP:
+      case ARDUINO_EVENT_WIFI_STA_GOT_IP:
           //When connected set 
           Serial.print("WiFi connected! IP address: ");
           Serial.println(WiFi.localIP());  
@@ -67,9 +67,10 @@ void WiFiEvent(WiFiEvent_t event){
           udp.begin(WiFi.localIP(),udpPort);
           connected = true;
           break;
-      case SYSTEM_EVENT_STA_DISCONNECTED:
+      case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
           Serial.println("WiFi lost connection");
           connected = false;
           break;
+      default: break;
     }
 }
