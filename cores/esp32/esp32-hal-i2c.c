@@ -72,6 +72,7 @@ esp_err_t i2cInit(uint8_t i2c_num, int8_t sda, int8_t scl, uint32_t frequency){
     } else if(frequency > 1000000UL){
         frequency = 1000000UL;
     }
+    log_i("Initialising I2C Master: sda=%d scl=%d freq=%d", sda, scl, frequency);
 
     i2c_config_t conf = { };
     conf.mode = I2C_MODE_MASTER;
@@ -317,6 +318,8 @@ esp_err_t i2cSetClock(uint8_t i2c_num, uint32_t frequency){
         hal.dev = I2C_LL_GET_HW(i2c_num);
         i2c_hal_set_bus_timing(&(hal), frequency, src_clk);
         bus[i2c_num].frequency = frequency;
+        //Clock Stretching Timeout: 20b:esp32, 5b:esp32-c3, 24b:esp32-s2
+        i2c_set_timeout((i2c_port_t)i2c_num, I2C_LL_MAX_TIMEOUT);
     }
 
 end:
