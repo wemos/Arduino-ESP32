@@ -4,20 +4,19 @@
 #include <stdint.h>
 #include "soc/soc_caps.h"
 
-#define USB_VID 0x303A
-#define USB_PID 0x8192
+#define USB_VID          0x303A
+#define USB_PID          0x8192
 #define USB_MANUFACTURER "uPesy Electronics"
-#define USB_PRODUCT "uPesy ESP32S3 Basic"
-#define USB_SERIAL ""
-
+#define USB_PRODUCT      "uPesy ESP32S3 Basic"
+#define USB_SERIAL       ""
 
 static const uint8_t RGB_DATA = 38;
 // RGB_BUILTIN and RGB_BRIGHTNESS can be used in new Arduino API neopixelWrite()
-#define RGB_BUILTIN (RGB_DATA + SOC_GPIO_PIN_COUNT)  
+#define RGB_BUILTIN    (RGB_DATA + SOC_GPIO_PIN_COUNT)
 #define RGB_BRIGHTNESS 64
 
 static const uint8_t LED_BUILTIN = 2;
-#define BUILTIN_LED  LED_BUILTIN // backward compatibility
+#define BUILTIN_LED LED_BUILTIN  // backward compatibility
 #define LED_BUILTIN LED_BUILTIN  // allow testing #ifdef LED_BUILTIN
 
 static const uint8_t TX = 43;
@@ -31,10 +30,10 @@ static const uint8_t RX1 = 18;
 static const uint8_t SDA = 8;
 static const uint8_t SCL = 9;
 
-static const uint8_t SS    = 10;
-static const uint8_t MOSI  = 11;
-static const uint8_t MISO  = 13;
-static const uint8_t SCK   = 12;
+static const uint8_t SS = 10;
+static const uint8_t MOSI = 11;
+static const uint8_t MISO = 13;
+static const uint8_t SCK = 12;
 
 static const uint8_t A0 = 1;
 static const uint8_t A1 = 2;
@@ -72,11 +71,9 @@ static const uint8_t T12 = 12;
 static const uint8_t T13 = 13;
 static const uint8_t T14 = 14;
 
-static const uint8_t MTMS  = 42;
-static const uint8_t MTDI  = 41;
-static const uint8_t MTDO  = 40;
-static const uint8_t MTCK  = 39;
-
-
+static const uint8_t MTMS = 42;
+static const uint8_t MTDI = 41;
+static const uint8_t MTDO = 40;
+static const uint8_t MTCK = 39;
 
 #endif /* Pins_Arduino_h */

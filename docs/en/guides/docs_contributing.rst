@@ -72,11 +72,11 @@ We also recommend you install to grammar check extension to help you to review E
 Building
 ********
 
-To build the documentation and generate the HTLM files, you can use the following command inside the ``docs`` folder. After a successful build, you can check the files inside the `build/html` folder.
+To build the documentation and generate the HTML files, you can use the following command inside the ``docs`` folder. After a successful build, you can check the files inside the `_build/en/generic/html` folder.
 
 .. code-block::
 
-    make html
+    build-docs -l en
 
 This step is essential to ensure that there are no syntax errors and also to see the final result.
 
@@ -89,22 +89,22 @@ If everything is ok, you will see some output logs similar to this one:
     building [mo]: targets for 0 po files that are out of date
     building [html]: targets for 35 source files that are out of date
     updating environment: [extensions changed ('sphinx_tabs.tabs')] 41 added, 3 changed, 0 removed
-    reading sources... [100%] tutorials/tutorials                                                                                                                                                                                                                                                             
+    reading sources... [100%] tutorials/tutorials
     looking for now-outdated files... none found
     pickling environment... done
     checking consistency... done
     preparing documents... done
-    writing output... [100%] tutorials/tutorials                                                                                                                                                                                                                                                              
+    writing output... [100%] tutorials/tutorials
     generating indices...  genindexdone
     writing additional pages...  searchdone
-    copying images... [100%] tutorials/../../_static/tutorials/peripherals/tutorial_peripheral_diagram.png                                                                                                                                                                                                       
+    copying images... [100%] tutorials/../../_static/tutorials/peripherals/tutorial_peripheral_diagram.png
     copying static files... ... done
     copying extra files... done
     dumping search index in English (code: en)... done
     dumping object inventory... done
     build succeeded.
 
-The HTML pages are in build/html.
+The HTML pages are in `_build/en/generic/html`.
 
 Sections
 --------
@@ -180,7 +180,7 @@ Here is an example of how to add the function description from `I2C API <https:/
     setPins
     ^^^^^^^
 
-    This function is used to define the ``SDA`` and ``SCL`` pins. 
+    This function is used to define the ``SDA`` and ``SCL`` pins.
 
     .. note:: Call this function before ``begin`` to change the pins from the default ones.
 

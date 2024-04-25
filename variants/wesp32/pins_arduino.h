@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-#define TX1   12
-#define RX1   13
-#define TX2   33
-#define RX2   39
+#define TX1 12
+#define RX1 13
+#define TX2 33
+#define RX2 39
 
 static const uint8_t TX = 1;
 static const uint8_t RX = 3;
@@ -14,10 +14,10 @@ static const uint8_t RX = 3;
 static const uint8_t SCL = 4;
 static const uint8_t SDA = 15;
 
-static const uint8_t SS    = 5;
-static const uint8_t MOSI  = 23;
-static const uint8_t MISO  = 32;
-static const uint8_t SCK   = 18;
+static const uint8_t SS = 5;
+static const uint8_t MOSI = 23;
+static const uint8_t MISO = 32;
+static const uint8_t SCK = 18;
 
 static const uint8_t A0 = 36;
 static const uint8_t A3 = 39;

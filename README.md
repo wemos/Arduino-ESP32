@@ -1,6 +1,6 @@
 # Arduino core for the ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP32-C6 and ESP32-H2
 
-![Build Status](https://github.com/espressif/arduino-esp32/workflows/ESP32%20Arduino%20CI/badge.svg) [![External Libraries Test](https://github.com/espressif/arduino-esp32/actions/workflows/lib.yml/badge.svg?branch=master&event=schedule)](https://github.com/espressif/arduino-esp32/actions/workflows/lib.yml?link=http://https://github.com/espressif/arduino-esp32/blob/master/LIBRARIES_TEST.md)
+![Build Status](https://github.com/espressif/arduino-esp32/workflows/ESP32%20Arduino%20CI/badge.svg) [![External Libraries Test](https://github.com/espressif/arduino-esp32/actions/workflows/lib.yml/badge.svg?branch=master&event=schedule)](https://github.com/espressif/arduino-esp32/blob/gh-pages/LIBRARIES_TEST.md) [![Hardware Tests](https://github.com/espressif/arduino-esp32/actions/workflows/hil.yml/badge.svg?branch=master&event=schedule)](https://github.com/espressif/arduino-esp32/actions/workflows/hil.yml?query=event%3Aschedule)
 
 ### Need help or have a question? Join the chat at [Gitter](https://gitter.im/espressif/arduino-esp32) or [open a new Discussion](https://github.com/espressif/arduino-esp32/discussions)
 
@@ -68,7 +68,7 @@ You can use [EspExceptionDecoder](https://github.com/me-no-dev/EspExceptionDecod
 
 ### Issue/Bug report template
 
-Before reporting an issue, make sure you've searched for similar one that was already created. Also make sure to go through all the issues labelled as [Type: For reference](https://github.com/espressif/arduino-esp32/issues?q=is%3Aissue+label%3A%22Type%3A+For+reference%22+).
+Before reporting an issue, make sure you've searched for similar one that was already created. Also make sure to go through all the issues labeled as [Type: For reference](https://github.com/espressif/arduino-esp32/issues?q=is%3Aissue+label%3A%22Type%3A+For+reference%22+).
 
 Finally, if you are sure no one else had the issue, follow the **Issue template** or **Feature request template** while reporting any [new Issue](https://github.com/espressif/arduino-esp32/issues/new/choose).
 

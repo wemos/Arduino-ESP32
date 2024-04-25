@@ -9,10 +9,10 @@ static const uint8_t RX = 3;
 static const uint8_t SDA = 23;
 static const uint8_t SCL = 22;
 
-static const uint8_t SS    = 5;
-static const uint8_t MOSI  = 23;
-static const uint8_t MISO  = 19;
-static const uint8_t SCK   = 18;
+static const uint8_t SS = 5;
+static const uint8_t MOSI = 23;
+static const uint8_t MISO = 19;
+static const uint8_t SCK = 18;
 
 static const uint8_t A0 = 36;
 static const uint8_t A3 = 39;
@@ -45,7 +45,6 @@ static const uint8_t T9 = 32;
 static const uint8_t DAC1 = 25;
 static const uint8_t DAC2 = 26;
 
-
 static const uint8_t P0 = 33;
 static const uint8_t P1 = 32;
 static const uint8_t P2 = 35;
@@ -77,6 +76,5 @@ static const uint8_t BTN_B = 2;
 static const uint8_t SOUND = 36;
 static const uint8_t LIGHT = 39;
 static const uint8_t BUZZER = 16;
-
 
 #endif /* Pins_Arduino_h */

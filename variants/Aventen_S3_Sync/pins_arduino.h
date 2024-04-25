@@ -3,28 +3,28 @@
 
 #include <stdint.h>
 
-#define USB_VID 0x303a
-#define USB_PID 0x1001
+#define USB_VID          0x303a
+#define USB_PID          0x1001
 #define USB_MANUFACTURER "Aventen"
-#define USB_PRODUCT "Aventen S3 Sync"
-#define USB_SERIAL ""
+#define USB_PRODUCT      "Aventen S3 Sync"
+#define USB_SERIAL       ""
 
 static const uint8_t TX = 43;
 static const uint8_t RX = 44;
 
-static const uint8_t SDA   = 2;
-static const uint8_t SCL   = 3;
+static const uint8_t SDA = 2;
+static const uint8_t SCL = 3;
 static const uint8_t SCL_1 = 21;
 static const uint8_t SDA_1 = 20;
 
-static const uint8_t SS    = 10;
-static const uint8_t MOSI  = 11;
-static const uint8_t MISO  = 13;
-static const uint8_t SCK   = 12;
+static const uint8_t SS = 10;
+static const uint8_t MOSI = 11;
+static const uint8_t MISO = 13;
+static const uint8_t SCK = 12;
 
-static const uint8_t ALS    = 17;
+static const uint8_t ALS = 17;
 static const uint8_t RGB_DI = 38;
-static const uint8_t RF_SW  = 37;
+static const uint8_t RF_SW = 37;
 
 static const uint8_t A0 = 1;
 static const uint8_t A1 = 2;

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 static const uint8_t LED_BUILTIN = 18;
-#define BUILTIN_LED  LED_BUILTIN // backward compatibility
+#define BUILTIN_LED LED_BUILTIN  // backward compatibility
 #define LED_BUILTIN LED_BUILTIN  // allow testing #ifdef LED_BUILTIN
 
 #define TX1 12
@@ -35,11 +35,11 @@ static const uint8_t T2 = 2;
 static const uint8_t T8 = 33;
 static const uint8_t T9 = 32;
 
-#define ETH_PHY_ADDR 0
+#define ETH_PHY_ADDR  0
 #define ETH_PHY_POWER -1
-#define ETH_PHY_MDC 16
-#define ETH_PHY_MDIO 14
-#define ETH_PHY_TYPE ETH_PHY_LAN8720
-#define ETH_CLK_MODE ETH_CLOCK_GPIO17_OUT
+#define ETH_PHY_MDC   16
+#define ETH_PHY_MDIO  14
+#define ETH_PHY_TYPE  ETH_PHY_LAN8720
+#define ETH_CLK_MODE  ETH_CLOCK_GPIO17_OUT
 
 #endif /* Pins_Arduino_h */

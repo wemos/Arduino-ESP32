@@ -29,14 +29,14 @@ limitations under the License.
 // so it's a better fit for microcontroller applications, but this does mean
 // there are hard limits on the number of results it can store.
 class PreviousResultsQueue {
- public:
+public:
   PreviousResultsQueue() : front_index_(0), size_(0) {}
 
   // Data structure that holds an inference result, and the time when it
   // was recorded.
   struct Result {
     Result() : time_(0), scores() {}
-    Result(int32_t time, int8_t* input_scores) : time_(time) {
+    Result(int32_t time, int8_t *input_scores) : time_(time) {
       for (int i = 0; i < kCategoryCount; ++i) {
         scores[i] = input_scores[i];
       }
@@ -45,10 +45,16 @@ class PreviousResultsQueue {
     int8_t scores[kCategoryCount];
   };
 
-  int size() { return size_; }
-  bool empty() { return size_ == 0; }
-  Result& front() { return results_[front_index_]; }
-  Result& back() {
+  int size() {
+    return size_;
+  }
+  bool empty() {
+    return size_ == 0;
+  }
+  Result &front() {
+    return results_[front_index_];
+  }
+  Result &back() {
     int back_index = front_index_ + (size_ - 1);
     if (back_index >= kMaxResults) {
       back_index -= kMaxResults;
@@ -56,7 +62,7 @@ class PreviousResultsQueue {
     return results_[back_index];
   }
 
-  void push_back(const Result& entry) {
+  void push_back(const Result &entry) {
     if (size() >= kMaxResults) {
       MicroPrintf("Couldn't push_back latest result, too many already!");
       return;
@@ -82,7 +88,7 @@ class PreviousResultsQueue {
   // Most of the functions are duplicates of dequeue containers, but this
   // is a helper that makes it easy to iterate through the contents of the
   // queue.
-  Result& from_front(int offset) {
+  Result &from_front(int offset) {
     if ((offset < 0) || (offset >= size_)) {
       MicroPrintf("Attempt to read beyond the end of the queue!");
       offset = size_ - 1;
@@ -94,7 +100,7 @@ class PreviousResultsQueue {
     return results_[index];
   }
 
- private:
+private:
   static constexpr int kMaxResults = 50;
   Result results_[kMaxResults];
 
@@ -113,7 +119,7 @@ class PreviousResultsQueue {
 // increasing from the previous, since the class is designed to process a stream
 // of data over time.
 class RecognizeCommands {
- public:
+public:
   // labels should be a list of the strings associated with each one-hot score.
   // The window duration controls the smoothing. Longer durations will give a
   // higher confidence that the results are correct, but may miss some commands.
@@ -124,18 +130,15 @@ class RecognizeCommands {
   // initially being populated for example. The suppression argument disables
   // further recognitions for a set time after one has been triggered, which can
   // help reduce spurious recognitions.
-  explicit RecognizeCommands(int32_t average_window_duration_ms = 1000,
-                             uint8_t detection_threshold = 200,
-                             int32_t suppression_ms = 1500,
-                             int32_t minimum_count = 3);
+  explicit RecognizeCommands(
+    int32_t average_window_duration_ms = 1000, uint8_t detection_threshold = 200, int32_t suppression_ms = 1500, int32_t minimum_count = 3
+  );
 
   // Call this with the results of running a model on sample data.
-  TfLiteStatus ProcessLatestResults(const TfLiteTensor* latest_results,
-                                    const int32_t current_time_ms,
-                                    const char** found_command, uint8_t* score,
-                                    bool* is_new_command);
+  TfLiteStatus
+    ProcessLatestResults(const TfLiteTensor *latest_results, const int32_t current_time_ms, const char **found_command, uint8_t *score, bool *is_new_command);
 
- private:
+private:
   // Configuration
   int32_t average_window_duration_ms_;
   uint8_t detection_threshold_;
@@ -144,7 +147,7 @@ class RecognizeCommands {
 
   // Working variables
   PreviousResultsQueue previous_results_;
-  const char* previous_top_label_;
+  const char *previous_top_label_;
   int32_t previous_top_label_time_;
 };
 
