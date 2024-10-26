@@ -104,7 +104,7 @@ If everything is ok, you will see some output logs similar to this one:
     dumping object inventory... done
     build succeeded.
 
-The HTML pages are in `_build/en/generic/html`.
+The HTML pages are in ``_build/en/generic/html``.
 
 Sections
 --------
@@ -316,7 +316,7 @@ After that, you can use the following structure to include the image in the docs
 
 You can adjust the ``width`` according to the image size.
 
-Be sure the file size does not exceed 600kB.
+Be sure the file size does not exceed 600 kB.
 
 Support
 *******

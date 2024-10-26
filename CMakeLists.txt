@@ -112,6 +112,7 @@ set(ARDUINO_ALL_LIBRARIES
   WiFi
   WiFiProv
   Wire
+  Zigbee
   )
 
 set(ARDUINO_LIBRARY_ArduinoOTA_SRCS libraries/ArduinoOTA/src/ArduinoOTA.cpp)
@@ -156,6 +157,7 @@ set(ARDUINO_LIBRARY_HTTPUpdate_SRCS libraries/HTTPUpdate/src/HTTPUpdate.cpp)
 set(ARDUINO_LIBRARY_Insights_SRCS libraries/Insights/src/Insights.cpp)
 
 set(ARDUINO_LIBRARY_LittleFS_SRCS libraries/LittleFS/src/LittleFS.cpp)
+set(ARDUINO_LIBRARY_LittleFS_REQUIRES joltwallet__littlefs)
 
 set(ARDUINO_LIBRARY_NetBIOS_SRCS libraries/NetBIOS/src/NetBIOS.cpp)
 
@@ -240,6 +242,18 @@ set(ARDUINO_LIBRARY_WiFiProv_SRCS libraries/WiFiProv/src/WiFiProv.cpp)
 
 set(ARDUINO_LIBRARY_Wire_SRCS libraries/Wire/src/Wire.cpp)
 
+set(ARDUINO_LIBRARY_Zigbee_SRCS
+  libraries/Zigbee/src/ZigbeeCore.cpp
+  libraries/Zigbee/src/ZigbeeEP.cpp
+  libraries/Zigbee/src/ZigbeeHandlers.cpp
+  libraries/Zigbee/src/ep/ZigbeeColorDimmableLight.cpp
+  libraries/Zigbee/src/ep/ZigbeeColorDimmerSwitch.cpp
+  libraries/Zigbee/src/ep/ZigbeeLight.cpp
+  libraries/Zigbee/src/ep/ZigbeeSwitch.cpp
+  libraries/Zigbee/src/ep/ZigbeeTempSensor.cpp
+  libraries/Zigbee/src/ep/ZigbeeThermostat.cpp
+  )
+
 set(ARDUINO_LIBRARY_BLE_SRCS
   libraries/BLE/src/BLE2901.cpp
   libraries/BLE/src/BLE2902.cpp
@@ -293,7 +307,7 @@ endforeach()
 set(includedirs variants/${CONFIG_ARDUINO_VARIANT}/ cores/esp32/ ${ARDUINO_LIBRARIES_INCLUDEDIRS})
 set(srcs ${CORE_SRCS} ${ARDUINO_LIBRARIES_SRCS})
 set(priv_includes cores/esp32/libb64)
-set(requires spi_flash esp_partition mbedtls wifi_provisioning wpa_supplicant esp_adc esp_eth http_parser)
+set(requires spi_flash esp_partition mbedtls wpa_supplicant esp_adc esp_eth http_parser espressif__network_provisioning)
 set(priv_requires fatfs nvs_flash app_update spiffs bootloader_support bt esp_hid usb esp_psram ${ARDUINO_LIBRARIES_REQUIRES})
 
 if(NOT CONFIG_ARDUINO_SELECTIVE_COMPILATION OR CONFIG_ARDUINO_SELECTIVE_OpenThread)
@@ -320,7 +334,7 @@ target_compile_options(${COMPONENT_TARGET} PUBLIC
     -DARDUINO_ARCH_ESP32
     -DARDUINO_BOARD="${idf_target_caps}_DEV"
     -DARDUINO_VARIANT="${CONFIG_ARDUINO_VARIANT}"
-    -DESP32)
+    -DESP32=ESP32)
 
 if(CONFIG_AUTOSTART_ARDUINO)
     # in autostart mode, arduino-esp32 contains app_main() function and needs to

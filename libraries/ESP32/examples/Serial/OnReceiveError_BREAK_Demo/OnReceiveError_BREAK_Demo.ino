@@ -35,7 +35,7 @@
    before reading data, if necessary.
 
    In long UART transmissions, some data will be received based on FIFO Full parameter, and whenever
-   an error ocurs, it will raise the UART error interrupt.
+   an error occurs, it will raise the UART error interrupt.
 
    This sketch produces BREAK UART error in the beginning of a transmission and also at the end of a
    transmission. It will be possible to understand the order of the events in the logs.
@@ -80,7 +80,11 @@ void onReceiveFunction() {
   received_bytes = received_bytes + available;
   Serial.printf("onReceive Callback:: There are %d bytes available: {", available);
   while (available--) {
-    Serial.print((char)Serial1.read());
+    char c = Serial1.read();
+    Serial.printf("0x%x='%c'", c, c);
+    if (available) {
+      Serial.print(" ");
+    }
   }
   Serial.println("}");
 }

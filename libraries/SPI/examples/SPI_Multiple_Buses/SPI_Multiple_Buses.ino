@@ -39,13 +39,13 @@
 #define HSPI_SS   15
 #endif
 
-#if CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if !defined(CONFIG_IDF_TARGET_ESP32)
 #define VSPI FSPI
 #endif
 
 static const int spiClk = 1000000;  // 1 MHz
 
-//uninitialised pointers to SPI objects
+//uninitialized pointers to SPI objects
 SPIClass *vspi = NULL;
 SPIClass *hspi = NULL;
 

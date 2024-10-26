@@ -87,17 +87,13 @@ static void printChipInfo(void) {
     default:           chip_report_printf("Unknown %d\n", info.model); break;
   }
   printPkgVersion();
-  chip_report_printf("  Revision          : ");
-  if (info.revision > 0xFF) {
-    chip_report_printf("%d.%d\n", info.revision >> 8, info.revision & 0xFF);
-  } else {
-    chip_report_printf("%d\n", info.revision);
-  }
+  chip_report_printf("  Revision          : %.2f\n", (float)(info.revision) / 100.0);
   chip_report_printf("  Cores             : %d\n", info.cores);
   rtc_cpu_freq_config_t conf;
   rtc_clk_cpu_freq_get_config(&conf);
   chip_report_printf("  CPU Frequency     : %lu MHz\n", conf.freq_mhz);
   chip_report_printf("  XTAL Frequency    : %d MHz\n", rtc_clk_xtal_freq_get());
+  chip_report_printf("  Features Bitfield : %#010x\n", info.features);
   chip_report_printf("  Embedded Flash    : %s\n", (info.features & CHIP_FEATURE_EMB_FLASH) ? "Yes" : "No");
   chip_report_printf("  Embedded PSRAM    : %s\n", (info.features & CHIP_FEATURE_EMB_PSRAM) ? "Yes" : "No");
   chip_report_printf("  2.4GHz WiFi       : %s\n", (info.features & CHIP_FEATURE_WIFI_BGN) ? "Yes" : "No");

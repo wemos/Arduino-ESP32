@@ -49,6 +49,8 @@ dependencies:
     require: public
   espressif/esp_modem:
     version: "^1.1.0"
+  espressif/network_provisioning:
+    version: "~1.0.0"
   espressif/esp-zboss-lib:
     version: "^1.0.1"
     rules:
@@ -66,11 +68,11 @@ dependencies:
     rules:
       - if: "target != esp32c2"
   espressif/rmaker_common:
-    version: "^1.4.3"
+    version: "^1.4.6"
     rules:
       - if: "target != esp32c2"
   espressif/esp_insights:
-    version: "^1.0.1"
+    version: "^1.2.1"
     rules:
       - if: "target != esp32c2"
   espressif/qrcode:
@@ -94,3 +96,5 @@ dependencies:
     require: public
 examples:
   - path: ./idf_component_examples/hello_world
+  - path: ./idf_component_examples/hw_cdc_hello_world
+  - path: ./idf_component_examples/esp_matter_light

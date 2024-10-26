@@ -1,5 +1,5 @@
 name=ESP32 Arduino
-version=3.0.3
+version=3.0.5
 
 tools.esp32-arduino-libs.path={runtime.platform.path}/tools/esp32-arduino-libs
 tools.esp32-arduino-libs.path.windows={runtime.platform.path}\tools\esp32-arduino-libs
@@ -46,10 +46,14 @@ compiler.warning_flags.default=
 compiler.warning_flags.more=-Wall
 compiler.warning_flags.all=-Wall -Wextra
 
+# Additional flags specific to Arduino (not based on IDF flags).
+# Update tools/platformio-build.py when changing these flags.
+compiler.common_werror_flags=-Werror=return-type
+
 # Compile Flags
 compiler.cpreprocessor.flags="@{compiler.sdk.path}/flags/defines" "-I{build.source.path}" -iprefix "{compiler.sdk.path}/include/" "@{compiler.sdk.path}/flags/includes" "-I{compiler.sdk.path}/{build.memory_type}/include"
-compiler.c.flags="@{compiler.sdk.path}/flags/c_flags" {compiler.warning_flags} {compiler.optimization_flags}
-compiler.cpp.flags="@{compiler.sdk.path}/flags/cpp_flags" {compiler.warning_flags} {compiler.optimization_flags}
+compiler.c.flags="@{compiler.sdk.path}/flags/c_flags" {compiler.warning_flags} {compiler.optimization_flags} {compiler.common_werror_flags}
+compiler.cpp.flags="@{compiler.sdk.path}/flags/cpp_flags" {compiler.warning_flags} {compiler.optimization_flags} {compiler.common_werror_flags}
 compiler.S.flags="@{compiler.sdk.path}/flags/S_flags" {compiler.warning_flags} {compiler.optimization_flags}
 compiler.c.elf.flags="@{compiler.sdk.path}/flags/ld_flags" "@{compiler.sdk.path}/flags/ld_scripts"
 compiler.c.elf.libs="@{compiler.sdk.path}/flags/ld_libs"
@@ -99,7 +103,7 @@ build.code_debug=0
 build.defines=
 build.loop_core=
 build.event_core=
-build.extra_flags=-DARDUINO_HOST_OS="{runtime.os}" -DARDUINO_FQBN="{build.fqbn}" -DESP32 -DCORE_DEBUG_LEVEL={build.code_debug} {build.loop_core} {build.event_core} {build.defines} {build.extra_flags.{build.mcu}} {build.zigbee_mode}
+build.extra_flags=-DARDUINO_HOST_OS="{runtime.os}" -DARDUINO_FQBN="{build.fqbn}" -DESP32=ESP32 -DCORE_DEBUG_LEVEL={build.code_debug} {build.loop_core} {build.event_core} {build.defines} {build.extra_flags.{build.mcu}} {build.zigbee_mode}
 build.extra_libs=
 build.memory_type={build.boot}_qspi
 
@@ -138,6 +142,10 @@ recipe.hooks.core.postbuild.1.pattern=/usr/bin/env bash -c ": > '{file_opts.path
 recipe.hooks.prebuild.7.pattern.windows=cmd /c type nul > "{file_opts.path}"
 recipe.hooks.core.prebuild.1.pattern.windows=cmd /c echo "-DARDUINO_CORE_BUILD" > "{file_opts.path}"
 recipe.hooks.core.postbuild.1.pattern.windows=cmd /c type nul > "{file_opts.path}"
+
+# Copy sdkconfig to build folder
+recipe.hooks.prebuild.8.pattern=/usr/bin/env bash -c "cp -f "{compiler.sdk.path}"/sdkconfig "{build.path}"/sdkconfig"
+recipe.hooks.prebuild.8.pattern.windows=cmd /c COPY /y "{compiler.sdk.path}\sdkconfig" "{build.path}\sdkconfig"
 
 ## Compile c files
 recipe.c.o.pattern="{compiler.path}{compiler.c.cmd}" {compiler.c.extra_flags} {compiler.c.flags} -DF_CPU={build.f_cpu} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_BOARD="{build.board}" -DARDUINO_VARIANT="{build.variant}" -DARDUINO_PARTITION_{build.partitions} {build.extra_flags} {compiler.cpreprocessor.flags} {includes} "@{build.opt.path}" "@{file_opts.path}" "{source_file}" -o "{object_file}"
@@ -321,7 +329,7 @@ tools.esptool_py.upload.network_pattern={network_cmd} -i "{serial.port}" -p "{ne
 tools.esp_ota.upload.protocol=network
 tools.esp_ota.upload.field.password=Password
 tools.esp_ota.upload.field.password.secret=true
-tools.esp_ota.upload.pattern={cmd} -i {upload.port.address} -p {upload.port.properties.port} --auth={upload.field.password} -f "{build.path}/{build.project_name}.bin"
+tools.esp_ota.upload.pattern={cmd} -i {upload.port.address} -p {upload.port.properties.port} "--auth={upload.field.password}" -f "{build.path}/{build.project_name}.bin"
 
 ## Upload Sketch Through DFU OTA
 ## -------------------------------------------
